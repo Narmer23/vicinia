@@ -1,0 +1,178 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgis/postgis:15-3.4-alpine
+    container_name: vicinia-postgres
+    environment:
+      POSTGRES_DB: vicinia
+      POSTGRES_USER: vicinia_user
+      POSTGRES_PASSWORD: vicinia_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./infrastructure/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    networks:
+      - vicinia-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U vicinia_user -d vicinia"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Redis for caching and session storage
+  redis:
+    image: redis:7-alpine
+    container_name: vicinia-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - vicinia-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # API Gateway
+  api-gateway:
+    build:
+      context: ./backend/src/Vicinia.ApiGateway
+      dockerfile: Dockerfile
+    container_name: vicinia-api-gateway
+    ports:
+      - "5000:80"
+      - "5001:443"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Host=postgres;Database=vicinia;Username=vicinia_user;Password=vicinia_password
+      - Redis__ConnectionString=redis:6379
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - vicinia-network
+
+  # User Service
+  user-service:
+    build:
+      context: ./backend/src/Vicinia.UserService
+      dockerfile: Dockerfile
+    container_name: vicinia-user-service
+    ports:
+      - "5002:80"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Host=postgres;Database=vicinia_users;Username=vicinia_user;Password=vicinia_password
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - vicinia-network
+
+  # Scoring Service
+  scoring-service:
+    build:
+      context: ./backend/src/Vicinia.ScoringService
+      dockerfile: Dockerfile
+    container_name: vicinia-scoring-service
+    ports:
+      - "5003:80"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - Services__GeocodingService=http://geocoding-service:80
+      - Services__PoiService=http://poi-service:80
+      - Services__HistoryService=http://history-service:80
+    depends_on:
+      - geocoding-service
+      - poi-service
+      - history-service
+    networks:
+      - vicinia-network
+
+  # Geocoding Service
+  geocoding-service:
+    build:
+      context: ./backend/src/Vicinia.GeocodingService
+      dockerfile: Dockerfile
+    container_name: vicinia-geocoding-service
+    ports:
+      - "5004:80"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+    networks:
+      - vicinia-network
+
+  # POI Service
+  poi-service:
+    build:
+      context: ./backend/src/Vicinia.PoiService
+      dockerfile: Dockerfile
+    container_name: vicinia-poi-service
+    ports:
+      - "5005:80"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+    networks:
+      - vicinia-network
+
+  # History Service
+  history-service:
+    build:
+      context: ./backend/src/Vicinia.HistoryService
+      dockerfile: Dockerfile
+    container_name: vicinia-history-service
+    ports:
+      - "5006:80"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Host=postgres;Database=vicinia_history;Username=vicinia_user;Password=vicinia_password
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - vicinia-network
+
+  # Logging Service
+  logging-service:
+    build:
+      context: ./backend/src/Vicinia.LoggingService
+      dockerfile: Dockerfile
+    container_name: vicinia-logging-service
+    ports:
+      - "5007:80"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Host=postgres;Database=vicinia_logging;Username=vicinia_user;Password=vicinia_password
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - vicinia-network
+
+  # Frontend (Quasar)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: vicinia-frontend
+    ports:
+      - "9000:80"
+    environment:
+      - NODE_ENV=development
+    networks:
+      - vicinia-network
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  vicinia-network:
+    driver: bridge 

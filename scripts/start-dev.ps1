@@ -40,4 +40,22 @@ npm run dev
 Write-Host "Development environment started!" -ForegroundColor Green
 Write-Host "Frontend: http://localhost:9000" -ForegroundColor Cyan
 Write-Host "API Gateway: http://localhost:5000" -ForegroundColor Cyan
-Write-Host "Swagger: http://localhost:5000/swagger" -ForegroundColor Cyan 
+Write-Host "Swagger: http://localhost:5000/swagger" -ForegroundColor Cyan
+Write-Host ""
+Write-Host "Backend Service Ports:" -ForegroundColor Yellow
+Write-Host "  API Gateway: http://localhost:5000" -ForegroundColor White
+Write-Host "  User Service: http://localhost:5002" -ForegroundColor White
+Write-Host "  Scoring Service: http://localhost:5003" -ForegroundColor White
+Write-Host "  Geocoding Service: http://localhost:5004" -ForegroundColor White
+Write-Host "  POI Service: http://localhost:5005" -ForegroundColor White
+Write-Host "  History Service: http://localhost:5006" -ForegroundColor White
+Write-Host "  Logging Service: http://localhost:5007" -ForegroundColor White
+Write-Host ""
+Write-Host "Health Checks:" -ForegroundColor Yellow
+Write-Host "  API Gateway: http://localhost:5000/health" -ForegroundColor White
+Write-Host "  User Service: http://localhost:5002/health" -ForegroundColor White
+Write-Host "  Scoring Service: http://localhost:5003/health" -ForegroundColor White
+Write-Host "  Geocoding Service: http://localhost:5004/health" -ForegroundColor White
+Write-Host "  POI Service: http://localhost:5005/health" -ForegroundColor White
+Write-Host "  History Service: http://localhost:5006/health" -ForegroundColor White
+Write-Host "  Logging Service: http://localhost:5007/health" -ForegroundColor White 

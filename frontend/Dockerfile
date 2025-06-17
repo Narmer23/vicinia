@@ -9,6 +9,9 @@ COPY . .
 # Install dependencies
 RUN npm ci
 
+# Set environment variable for Docker build
+ENV VUE_APP_IS_DOCKER=true
+
 # Build the app
 RUN npm run build
 

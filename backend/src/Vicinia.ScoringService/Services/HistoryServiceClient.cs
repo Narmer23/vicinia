@@ -12,13 +12,13 @@ public class HistoryServiceClient : IHistoryServiceClient
 {
     private readonly HttpClient _httpClient;
     private readonly ILogger<HistoryServiceClient> _logger;
-    private readonly string _historyServiceUrl;
+    private readonly IServiceUrlResolver _serviceUrlResolver;
 
-    public HistoryServiceClient(HttpClient httpClient, ILogger<HistoryServiceClient> logger, IConfiguration configuration)
+    public HistoryServiceClient(HttpClient httpClient, ILogger<HistoryServiceClient> logger, IServiceUrlResolver serviceUrlResolver)
     {
         _httpClient = httpClient;
         _logger = logger;
-        _historyServiceUrl = configuration["Services:HistoryService"] ?? "http://history-service:5005";
+        _serviceUrlResolver = serviceUrlResolver;
     }
 
     public async Task<bool> SaveSearchHistoryAsync(SearchHistoryRequest history)
@@ -27,10 +27,11 @@ public class HistoryServiceClient : IHistoryServiceClient
         {
             _logger.LogInformation("Saving search history for user: {UserId}", history.UserId);
 
+            var historyServiceUrl = _serviceUrlResolver.GetServiceUrl("HistoryService");
             var json = JsonSerializer.Serialize(history);
             var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
 
-            var response = await _httpClient.PostAsync($"{_historyServiceUrl}/api/history", content);
+            var response = await _httpClient.PostAsync($"{historyServiceUrl}/api/history", content);
             
             if (response.IsSuccessStatusCode)
             {

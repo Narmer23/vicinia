@@ -12,13 +12,13 @@ public class GeocodingServiceClient : IGeocodingServiceClient
 {
     private readonly HttpClient _httpClient;
     private readonly ILogger<GeocodingServiceClient> _logger;
-    private readonly string _geocodingServiceUrl;
+    private readonly IServiceUrlResolver _serviceUrlResolver;
 
-    public GeocodingServiceClient(HttpClient httpClient, ILogger<GeocodingServiceClient> logger, IConfiguration configuration)
+    public GeocodingServiceClient(HttpClient httpClient, ILogger<GeocodingServiceClient> logger, IServiceUrlResolver serviceUrlResolver)
     {
         _httpClient = httpClient;
         _logger = logger;
-        _geocodingServiceUrl = configuration["Services:GeocodingService"] ?? "http://geocoding-service:5002";
+        _serviceUrlResolver = serviceUrlResolver;
     }
 
     public async Task<GeocodingResponse?> GeocodeAddressAsync(string address)
@@ -27,11 +27,12 @@ public class GeocodingServiceClient : IGeocodingServiceClient
         {
             _logger.LogInformation("Geocoding address: {Address}", address);
 
+            var geocodingServiceUrl = _serviceUrlResolver.GetServiceUrl("GeocodingService");
             var request = new { Address = address };
             var json = JsonSerializer.Serialize(request);
             var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
 
-            var response = await _httpClient.PostAsync($"{_geocodingServiceUrl}/api/geocoding/geocode", content);
+            var response = await _httpClient.PostAsync($"{geocodingServiceUrl}/api/geocoding/geocode", content);
             
             if (response.IsSuccessStatusCode)
             {

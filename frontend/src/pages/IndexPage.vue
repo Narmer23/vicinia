@@ -125,6 +125,7 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
+import { servicesConfig } from 'src/config'
 
 // Reactive data
 const mapContainer = ref<HTMLElement>()
@@ -200,7 +201,7 @@ async function searchLocation() {
   isSearching.value = true
   try {
     // Call geocoding service
-    const response = await fetch(`http://localhost:5004/api/geocoding/geocode?address=${encodeURIComponent(searchAddress.value)}`)
+    const response = await fetch(`${servicesConfig.geocodingService}/api/geocoding/geocode?address=${encodeURIComponent(searchAddress.value)}`)
     const data = await response.json()
 
     if (data.success) {
@@ -237,7 +238,7 @@ async function searchLocationByCoordinates(lat: number, lng: number) {
     map!.setView([lat, lng], 14)
 
     // Get POIs
-    const poiResponse = await fetch('http://localhost:5005/api/poi/search', {
+    const poiResponse = await fetch(`${servicesConfig.poiService}/api/poi/search`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -284,7 +285,7 @@ async function searchLocationByCoordinates(lat: number, lng: number) {
     })
 
     // Calculate score
-    const scoreResponse = await fetch('http://localhost:5003/api/scoring/calculate', {
+    const scoreResponse = await fetch(`${servicesConfig.scoringService}/api/scoring/calculate`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'

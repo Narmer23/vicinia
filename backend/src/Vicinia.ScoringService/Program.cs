@@ -19,6 +19,9 @@ builder.Services.AddSwaggerGen();
 // Add HTTP Client for service communication
 builder.Services.AddHttpClient();
 
+// Register service URL resolver
+builder.Services.AddScoped<IServiceUrlResolver, ServiceUrlResolver>();
+
 // Register service clients
 builder.Services.AddScoped<IGeocodingServiceClient, GeocodingServiceClient>();
 builder.Services.AddScoped<IPoiServiceClient, PoiServiceClient>();

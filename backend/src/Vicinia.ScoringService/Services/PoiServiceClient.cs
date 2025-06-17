@@ -12,13 +12,13 @@ public class PoiServiceClient : IPoiServiceClient
 {
     private readonly HttpClient _httpClient;
     private readonly ILogger<PoiServiceClient> _logger;
-    private readonly string _poiServiceUrl;
+    private readonly IServiceUrlResolver _serviceUrlResolver;
 
-    public PoiServiceClient(HttpClient httpClient, ILogger<PoiServiceClient> logger, IConfiguration configuration)
+    public PoiServiceClient(HttpClient httpClient, ILogger<PoiServiceClient> logger, IServiceUrlResolver serviceUrlResolver)
     {
         _httpClient = httpClient;
         _logger = logger;
-        _poiServiceUrl = configuration["Services:PoiService"] ?? "http://poi-service:5003";
+        _serviceUrlResolver = serviceUrlResolver;
     }
 
     public async Task<List<PoiResponse>?> GetNearbyPoisAsync(double latitude, double longitude, double radiusKm)
@@ -28,7 +28,8 @@ public class PoiServiceClient : IPoiServiceClient
             _logger.LogInformation("Getting nearby POIs for location: Lat: {Lat}, Lng: {Lng}, Radius: {Radius}km", 
                 latitude, longitude, radiusKm);
 
-            var url = $"{_poiServiceUrl}/api/poi/nearby?latitude={latitude}&longitude={longitude}&radiusKm={radiusKm}";
+            var poiServiceUrl = _serviceUrlResolver.GetServiceUrl("PoiService");
+            var url = $"{poiServiceUrl}/api/poi/nearby?latitude={latitude}&longitude={longitude}&radiusKm={radiusKm}";
             var response = await _httpClient.GetAsync(url);
             
             if (response.IsSuccessStatusCode)
